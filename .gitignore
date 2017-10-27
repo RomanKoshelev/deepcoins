@@ -1,0 +1,42 @@
+# IDEs
+.idea/
+.links/
+
+# data
+*.zip
+
+# ML
+*.ckpt
+dataset/
+weights/
+out/
+tboard/
+models/
+data/
+
+# Native build outputs
+*.slo
+*.lo
+*.o
+*.obj
+*.gch
+*.pch
+*.so
+*.dylib
+*.dll
+*.lai
+*.la
+*.a
+*.lib
+*.exe
+*.out
+*.app
+
+# Python stuff
+*.pyo
+*.pyc
+__pycache__
+
+
+# Temporary files
+*~
