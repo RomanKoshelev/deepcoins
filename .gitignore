@@ -12,7 +12,6 @@ weights/
 out/
 tboard/
 models/
-data/
 
 # Native build outputs
 *.slo
