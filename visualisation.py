@@ -37,7 +37,7 @@ def show_losses(losses, step, step_num, mean_win=10):
         plt.plot(losses)
         loss = losses[-1]
 
-    plt.title("Step: %d/%d [%.0f%%], loss: %.2e" % (
-        step+1, step_num, 100*(step+1)/step_num, loss))
+    plt.grid(True)
+    plt.title("Step: %d/%d [%.0f%%], loss: %.2e" % (step+1, step_num, 100*(step+1)/step_num, loss))
     clear_output(True)
     plt.show()
