@@ -48,8 +48,13 @@ class Dataset:
     
 
 class TripletDataset(Dataset):
-    def get_next_batch(self, bs):
-        data = self.train_images
+    def get_next_batch(self, bs, part='train'):
+        assert part == 'train' or part == 'test'
+        if part == 'train':
+            data = self.train_images
+        else:
+            data = self.test_images
+
         idx = np.random.choice(np.arange(len(data)), bs*2)
 
         main  = np.copy(data[idx[:bs]])
@@ -57,5 +62,3 @@ class TripletDataset(Dataset):
         diff  = np.copy(data[idx[bs:]])
         
         return main, same, diff
-
-
