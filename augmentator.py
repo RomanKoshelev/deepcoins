@@ -26,18 +26,18 @@ class Augmentator:
         hc = hash(im.tostring())
         cached = self._cache.get(hc, [])
         if len(cached) >= self._cache_size:
-            return np.copy(cached[np.random.randint(self._cache_size)])
-        im = np.copy(im)
-            
+            return cached[np.random.randint(self._cache_size)]
+        
         # smooth
         p = self._params['smooth']
         k = p*np.random.random(1)**2 * rate
         if k > 0.1:
-            kernel = np.ones([5,5],np.float32)/25
+            kernel = np.ones([5,5],'float32')/25
             old= np.copy(im)
             im = cv2.filter2D(im,-1,kernel)
             im = np.reshape(im, shape)
             im = k*im + (1-k)*old
+            del old
 
         # angle
         p = self._params['angle']
@@ -74,7 +74,7 @@ class Augmentator:
         # cache
         cached.append(im)
         self._cache[hc] = cached
-        return im  
+        return im.astype('float16')
     
     def augment(self, images):
         images = np.copy(images)

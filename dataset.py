@@ -20,12 +20,13 @@ class Dataset:
 
         for i,f in enumerate(files):
             f = os.path.join(path, f)
-            im = cv2.imread(f)
+            im = cv2.imread(f).astype('float32')
             if c == 1:
                 im = np.max(im, axis=2)
-            im = cv2.resize(im, (w,h), interpolation = cv2.INTER_CUBIC).astype('float32')
+            im = cv2.resize(im, (w,h), interpolation = cv2.INTER_CUBIC)
             im = np.reshape(im, [h,w,c])
-            images[i] = im / (im.max()+1e-6)
+            im = im / (im.max()+1e-6)
+            images[i] = im.astype('float16')
 
         self.path         = path
         self.data_size    = data_size
@@ -33,23 +34,7 @@ class Dataset:
         self.train_images = images[:data_size]
         self.test_images  = images[-data_size:]
     
-    def get_next_batch(self, bs):
-        data = self.train_images
-        idx1 = np.random.choice(np.arange(len(data)), bs)
-        idx2 = np.random.choice(np.arange(len(data)), bs)
-
-        img1  = np.copy(data[idx1])
-        img2  = np.copy(data[idx2])
-        label = np.random.randint(2, size=bs)
-
-        same = np.where(label==1)
-        img2[same] = img1[same]
-
-        return img1, img2, label
-    
-
-class TripletDataset(Dataset):
-    def get_next_batch(self, bs, part='train'):
+    def get_next_batch(self, bs, part):
         assert part == 'train' or part == 'test'
         if part == 'train':
             data = self.train_images
