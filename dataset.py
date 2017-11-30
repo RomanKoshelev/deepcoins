@@ -29,6 +29,7 @@ class Dataset:
 
         self.path         = path
         self.data_size    = data_size
+        self.file_num     = file_num
         self.train_images = images[:data_size]
         self.test_images  = images[-data_size:]
     
@@ -57,8 +58,8 @@ class TripletDataset(Dataset):
 
         idx = np.random.choice(np.arange(len(data)), bs*2)
 
-        main  = np.copy(data[idx[:bs]])
-        same  = np.copy(main)
-        diff  = np.copy(data[idx[bs:]])
+        main  = data[idx[:bs]]
+        same  = main
+        diff  = data[idx[bs:]]
         
         return main, same, diff
