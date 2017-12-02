@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import itertools
 from IPython.display import clear_output
 
-def show_images(images, image_shape, rows, cols):
+def _show_images(images, image_shape, rows, cols):
     h = image_shape[0]
     w = image_shape[1]
 
@@ -42,7 +42,7 @@ def show_losses(losses, step, step_num, mean_win=10):
     clear_output(True)
     plt.show()
 
-    
+
 def show_similarity(img1, img2, sim, cols=4):
     num = img1.shape[0]
     h   = img1.shape[1]
@@ -62,4 +62,4 @@ def show_similarity(img1, img2, sim, cols=4):
     sheet[np.arange(0,num*h,h)-1,:] = 0
     sheet[np.arange(0,num*h,h)+1,:] = 0
     sheet = np.minimum(sheet, 1)
-    show_images(images=sheet, image_shape=[h, 2*w+w3], cols=cols, rows=num//cols)
+    _show_images(images=sheet, image_shape=[h, 2*w+w3], cols=cols, rows=num//cols)

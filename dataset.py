@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import cv2
-import sys
 
 class Dataset:
     def __init__(self, image_shape):
