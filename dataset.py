@@ -3,47 +3,23 @@ import os
 import cv2
 
 class Dataset:
-    def __init__(self, image_shape):
-        self.image_shape  = image_shape
-        self.train_images = []
-        self.test_images  = []
-        self.data_size    = 0
+    def __init__(self, data_path):
+        self.data_path = data_path
+        self.data      = None 
 
-    def load(self, path, data_size):
-        files  = os.listdir(path)[:2*data_size]
-        file_num = len(files)
-        assert file_num >= data_size, "%s %s" % (file_num, data_size)
-
-        h, w, c = self.image_shape
-        images = np.zeros([file_num, h, w, c])
-
-        for i,f in enumerate(files):
-            f = os.path.join(path, f)
-            im = cv2.imread(f).astype('float32')
-            if c == 1:
-                im = np.max(im, axis=2)
-            im = cv2.resize(im, (w,h), interpolation = cv2.INTER_CUBIC)
-            im = np.reshape(im, [h,w,c])
-            im = im / (im.max()+1e-6)
-            images[i] = im.astype('float16')
-
-        self.path         = path
-        self.data_size    = data_size
-        self.file_num     = file_num
-        self.train_images = images[:data_size]
-        self.test_images  = images[-data_size:]
+    def load(self):
+        self.data = np.load(self.data_path)
     
-    def get_next_batch(self, bs, part):
-        assert part == 'train' or part == 'test'
-        if part == 'train':
-            data = self.train_images
-        else:
-            data = self.test_images
+    def get_next_batch(self, bs):
+        n,a = self.data.shape[:2]
+        assert 2*bs<=n and bs<=a
+        idx_n   = np.random.choice(np.arange(n), bs*2, replace=False)
+        idx_a_1 = np.random.choice(np.arange(a), bs,   replace=False)
+        idx_a_2 = np.random.choice(np.arange(a), bs,   replace=False)
+        idx_a_3 = np.random.choice(np.arange(a), bs,   replace=False)
 
-        idx = np.random.choice(np.arange(len(data)), bs*2)
-
-        main  = data[idx[:bs]]
-        same  = main
-        diff  = data[idx[bs:]]
+        main  = self.data[idx_n[:bs],  idx_a_1]
+        same  = self.data[idx_n[:bs],  idx_a_2]
+        diff  = self.data[idx_n[-bs:], idx_a_3]
         
         return main, same, diff

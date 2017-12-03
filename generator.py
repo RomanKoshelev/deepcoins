@@ -19,6 +19,7 @@ class Generator:
             res = augmentator.augment(ethalons)
             res = np.mean(res, axis=3, keepdims=True)
             augmented[:,i,:,:] = res
+        augmented[:,0,:] = np.mean(ethalons, axis=3, keepdims=True)
         self.augmented = augmented
         return self.augmented
     
@@ -28,4 +29,3 @@ class Generator:
         ds_path = os.path.join(dataset_dir, ds_name+'.npy')
         np.save(ds_path, data)
         return ds_path
-    
