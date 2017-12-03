@@ -54,3 +54,6 @@ def grayscale(images):
 
 def choice(images, num):
     return images[np.random.choice(images.shape[0], num, replace=False), :]
+
+def uint8_to_float32(images):
+    return images.astype('float32')/256
