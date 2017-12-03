@@ -38,11 +38,35 @@ def show_losses(losses, step, step_num, mean_win=10):
         loss = losses[-1]
 
     plt.grid(True)
-    plt.title("Step: %d/%d [%.0f%%], loss: %.2e" % (step+1, step_num, 100*(step+1)/step_num, loss))
+    plt.title("step: %d/%d [%.0f%%], loss: %.2e" % (step+1, step_num, 100*(step+1)/step_num, loss))
     clear_output(True)
     plt.show()
 
+    
+def show_losses_ex(step, tr_losses, va_losses, mean_win=30, log_scale=False):
+    def running_mean(x, N):
+        cumsum = np.cumsum(np.insert(x, 0, 0)) 
+        return (cumsum[N:] - cumsum[:-N]) / N 
 
+    tr_rm = running_mean(tr_losses, mean_win)
+    va_rm = running_mean(va_losses, mean_win)
+    tr_loss = tr_rm[-1] if len(tr_rm)>0 else tr_losses[-1]
+    va_loss = va_rm[-1] if len(va_rm)>0 else 0
+
+    plt.title("step: %d, va_loss: %.4f, tr_loss: %.4f" % (step+1, va_loss, tr_loss))
+    plt.plot(tr_losses, 'c')
+    va, = plt.plot(va_rm, 'r', label="valid")
+    tr, = plt.plot(tr_rm, 'b', label="train")
+    
+    plt.grid(True)    
+    if log_scale:
+        plt.yscale("log")
+    plt.legend(handles=[va, tr])
+
+    clear_output(True)    
+    plt.show()
+
+    
 def show_similarity(img1, img2, sim, cols=4):
     num = img1.shape[0]
     h   = img1.shape[1]

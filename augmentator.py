@@ -8,7 +8,7 @@ class Augmentator:
         do = iaa.Sometimes
         self._seq = iaa.Sequential([
             iaa.Grayscale(alpha=(1.0, 1.0)),
-            do(.5, iaa.Affine(
+            do(1., iaa.Affine(
                 scale             = {"x": (+0.8, +1.0), "y": (+0.8, +1.0)},
                 translate_percent = {"x": (-0.1, +0.1), "y": (-0.1, +0.1)},
                 rotate            = (-45, +45),
