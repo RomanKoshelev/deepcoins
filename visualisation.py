@@ -18,7 +18,7 @@ def _show_images(images, image_shape, rows, cols):
         H = (i*cols+j) * h
         sheet[i*h:i*h+h, j*w:j*w+w] = img[H: H+h, 0:w]
 
-    plt.figure(figsize = (15,7))
+    plt.figure(figsize = (18,8))
     plt.axis("off")
     plt.imshow(sheet, cmap='gray')
     plt.show()

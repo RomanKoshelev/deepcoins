@@ -1,2 +1,9 @@
 TODO: 
 - use background augmentation https://github.com/aleju/imgaug/blob/master/tests/test_readme_examples.py#L397
+- show test loss while training
++ add normalization
+- try arc from:
+  - http://users.eecs.northwestern.edu/~jwa368/pdfs/deep_ranking.pdf
+  - https://arxiv.org/pdf/1503.03832.pdf
+  - tf.nn.elu
+  + VGG16
