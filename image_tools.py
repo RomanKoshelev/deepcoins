@@ -14,12 +14,14 @@ def load(path, num=None):
         images.append(im)
     return images
 
-def __normalize(images):
+def normalize(images):
+    res = np.zeros_like(images)
     for i in range(len(images)):
-        im = images[i].astype('float32')/255
+        res[i] = images[i]
+        im = res[i]
         im = im - np.min(im)
         im = im/(np.max(im)+1e-6)
-        images[i] = im
+    return res
         
 def resize(images, shape):
     h,w,c = shape
