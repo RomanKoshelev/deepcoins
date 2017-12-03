@@ -61,7 +61,7 @@ class Model():
                 })
                 tr_losses.append(tr_loss)
                 if step % log_every == log_every-1:
-                    img_main, img_same, img_diff = tr_dataset.get_next_batch(batch_size)
+                    img_main, img_same, img_diff = va_dataset.get_next_batch(batch_size)
                     va_loss = self._session.run(self.loss_op, feed_dict={
                         self.img_main_pl: img_main,
                         self.img_same_pl: img_same,
