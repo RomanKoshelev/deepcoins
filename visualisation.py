@@ -3,6 +3,13 @@ import matplotlib.pyplot as plt
 import itertools
 from IPython.display import clear_output
 
+def running_mean(arr, num):
+    if len(arr) == 0:
+        return [0]
+    cumsum = np.cumsum(np.insert(arr, 0, [arr[0]]*num))
+    return (cumsum[num:] - cumsum[:-num]) / num 
+
+
 def _show_images(images, image_shape, rows, cols):
     h = image_shape[0]
     w = image_shape[1]
@@ -42,18 +49,16 @@ def show_losses(losses, step, step_num, mean_win=10):
     clear_output(True)
     plt.show()
 
+def show_losses_acc(ep, lr, tr_losses, va_losses, mean_win=30, log_scale=False):
+    pass
     
-def show_losses_ex(tr_losses, va_losses, lr, mean_win=30, log_scale=False):
-    def running_mean(x, N):
-        cumsum = np.cumsum(np.insert(x, 0, 0)) 
-        return (cumsum[N:] - cumsum[:-N]) / N 
-
+def show_losses_ex(ep, lr, tr_losses, va_losses, mean_win=30, log_scale=False):
     tr_rm = running_mean(tr_losses, mean_win)
     va_rm = running_mean(va_losses, mean_win)
     tr_loss = tr_rm[-1] if len(tr_rm)>0 else tr_losses[-1]
     va_loss = va_rm[-1] if len(va_rm)>0 else 0
 
-    plt.title("lr: %.1e, valid: %.1e, train: %.1e" % (lr, va_loss, tr_loss))
+    plt.title("ep:%.1f, lr:%.1e, valid:%.1e, train:%.1e" % (ep, lr, va_loss, tr_loss))
     plt.plot(tr_losses, 'c')
     va, = plt.plot(va_rm, 'r', label="valid")
     tr, = plt.plot(tr_rm, 'b', label="train")
@@ -66,7 +71,7 @@ def show_losses_ex(tr_losses, va_losses, lr, mean_win=30, log_scale=False):
     clear_output(True)    
     plt.show()
 
-    
+
 def show_similarity(img1, img2, sim, cols=4):
     num = img1.shape[0]
     h   = img1.shape[1]
@@ -87,3 +92,37 @@ def show_similarity(img1, img2, sim, cols=4):
     sheet[np.arange(0,num*h,h)+1,:] = 0
     sheet = np.minimum(sheet, 1)
     _show_images(images=sheet, image_shape=[h, 2*w+w3], cols=cols, rows=num//cols)
+    
+def show_loss_dist(ep, lr, tr_losses, va_losses, neg_dist, pos_dist, mean_win=30, log_scale=False):
+    plt.figure(figsize=(16,12))
+    fontsize = 14
+
+    # Loss
+    plt.subplot(221)
+    tr_means = running_mean(tr_losses, mean_win)
+    va_means = running_mean(va_losses, mean_win)
+    tr_loss = tr_means[-1]
+    va_loss = va_means[-1]
+    plt.title("Epoch %.1f | LR %.1e | Valid %.1e | Train %.1e" % (ep, lr, va_loss, tr_loss), fontsize=fontsize)
+    plt.plot(tr_losses, 'c')
+    va, = plt.plot(va_means, 'r', label="Valid")
+    tr, = plt.plot(tr_means, 'b', label="Train")
+    if log_scale:
+        plt.yscale("log")
+    plt.legend(handles=[va, tr])
+    plt.grid(True)
+
+    # Distances
+    plt.subplot(222)
+    neg_means = running_mean(neg_dist, mean_win)
+    pos_means = running_mean(pos_dist, mean_win)
+    plt.yscale('linear')
+    plt.title('Distances on train | Negative %.2f | Positive %.2f' % (neg_means[-1], pos_means[-1]), fontsize=fontsize)
+    nd, = plt.plot(neg_means, 'r', label="Negative")
+    pd, = plt.plot(pos_means, 'b', label="Positive")
+    plt.legend(handles=[nd, pd], loc=0)
+    plt.grid(True)
+
+    # Show
+    clear_output(True)    
+    plt.show()    

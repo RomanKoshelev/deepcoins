@@ -1,26 +1,25 @@
 import tensorflow as tf
 import numpy as np
-from visualisation import show_losses_ex
+from visualisation import show_loss_dist
+
+
+def euclidean_dist(a, b):
+    return tf.reduce_sum((a-b)**2, axis=1)
+
 
 class Model():
     def __init__(self, image_shape, out_dims):
-        self.image_shape = image_shape
-        self.out_dims    = out_dims
-        self._session    = None
-        self._graph      = None
-        self.scope       = 'embedding'
-        self.tr_step     = 0
-        self.tr_losses   = []
-        self.va_losses   = []
+        self.image_shape   = image_shape
+        self.out_dims      = out_dims
+        self._session      = None
+        self._graph        = None
+        self.scope         = 'embedding'
+        self.tr_step       = 0
+        self.tr_losses     = []
+        self.va_losses     = []
+        self.neg_distances = []
+        self.pos_distances = []
 
-    def _make_loss(self, main, same, diff, margin):
-        def dist(a, b):
-            return tf.reduce_sum((a-b)**2, axis=1)
-        pos_dist = dist(main, same)
-        neg_dist = dist(main, diff)
-        loss = tf.nn.relu(pos_dist - neg_dist + margin)
-        loss = tf.reduce_mean(loss)
-        return loss
 
     def _calc_lr(self, lr, losses, mean_win):
         def losses_to_lr(lr_dict, losses, mean_win):
@@ -43,7 +42,18 @@ class Model():
             return lr
         else:
             raise RuntimeError("wrong lr type")
-        
+
+
+    def _make_loss(self, main, same, diff, margin):
+        pos_dist = euclidean_dist(main, same)
+        neg_dist = euclidean_dist(main, diff)
+        loss = tf.nn.relu(pos_dist - neg_dist + margin)
+        loss = tf.reduce_mean(loss)
+        return loss
+    
+    def _make_mean_distance(self, a, b):
+        return tf.reduce_mean(euclidean_dist(a, b))
+            
     def build(self, net):
         tf.reset_default_graph()
         self._graph = tf.Graph()
@@ -60,9 +70,11 @@ class Model():
             self.nn_main      = net(self.img_main_pl, self.out_dims, reuse=False, training=self.training_pl)
             self.nn_same      = net(self.img_same_pl, self.out_dims, reuse=True,  training=self.training_pl)
             self.nn_diff      = net(self.img_diff_pl, self.out_dims, reuse=True,  training=self.training_pl)
-            # operations            
+            # operations
             self.update_ops   = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             self.loss_op      = self._make_loss(self.nn_main, self.nn_same, self.nn_diff, self.margin_pl)
+            self.pos_dist_op  = self._make_mean_distance(self.nn_main, self.nn_same)
+            self.neg_dist_op  = self._make_mean_distance(self.nn_main, self.nn_diff)
             with tf.control_dependencies(self.update_ops):
                 self.train_op = tf.train.AdamOptimizer(self.lr_pl).minimize(self.loss_op)
             self.init_op      = tf.global_variables_initializer()
@@ -70,34 +82,42 @@ class Model():
         self._session = tf.Session(graph=self._graph)
         self._session.run(self.init_op)
         
-    def train(self, tr_dataset, va_dataset, step_num, batch_size, margin, lr, log_every=10, mean_win=100):
-        try:
-            for self.tr_step in range(self.tr_step, step_num):
-                cur_lr = self._calc_lr(lr, self.tr_losses, mean_win)
-                img_main, img_same, img_diff = tr_dataset.get_next_batch(batch_size)
-                _, tr_loss = self._session.run([self.train_op, self.loss_op], feed_dict={
+    def train(self, tr_dataset, va_dataset, step_num, batch_size, margin, lr, log_every=10, mean_win=100, log_scale=False):
+        data_size = tr_dataset.get_data_size()
+        for self.tr_step in range(self.tr_step, step_num):
+            cur_lr = self._calc_lr(lr, self.tr_losses, mean_win)
+            ep = self.tr_step*batch_size/data_size
+            # Train
+            img_main, img_same, img_diff = tr_dataset.get_next_batch(batch_size)
+            _, tr_loss, pos_dist, neg_dist = self._session.run(
+                [self.train_op, self.loss_op, self.pos_dist_op, self.neg_dist_op], 
+                feed_dict={
                     self.img_main_pl: img_main,
                     self.img_same_pl: img_same,
                     self.img_diff_pl: img_diff,
                     self.margin_pl:   margin,
                     self.lr_pl:       cur_lr,
-                    self.training_pl: True,
-                })
-                self.tr_losses.append(tr_loss)
-                if self.tr_step % log_every == log_every-1:
-                    img_main, img_same, img_diff = va_dataset.get_next_batch(batch_size)
-                    va_loss = self._session.run(self.loss_op, feed_dict={
+                    self.training_pl: True })
+            self.tr_losses.append(tr_loss)
+            self.pos_distances.append(pos_dist)
+            self.neg_distances.append(neg_dist)
+            # Eval
+            if self.tr_step % log_every == log_every-1:
+                img_main, img_same, img_diff = va_dataset.get_next_batch(batch_size)
+                va_loss = self._session.run(
+                    [self.loss_op], 
+                    feed_dict={
                         self.img_main_pl: img_main,
                         self.img_same_pl: img_same,
                         self.img_diff_pl: img_diff,
                         self.margin_pl:   margin,
-                        self.training_pl: False,
-                    })
-                    self.va_losses.append([va_loss]*log_every)
-                    show_losses_ex(self.tr_losses, self.va_losses, cur_lr, mean_win)
-        except KeyboardInterrupt:
-            pass
-        show_losses_ex(self.tr_losses, self.va_losses, cur_lr, mean_win)
+                        self.training_pl: False })
+                self.va_losses.extend([va_loss]*log_every)
+                show_loss_dist(
+                    ep, cur_lr, 
+                    self.tr_losses, self.va_losses, 
+                    self.neg_distances, self.pos_distances, 
+                    mean_win, log_scale)
 
     def save(self, path):
         with self._graph.as_default(), tf.variable_scope(self.scope):

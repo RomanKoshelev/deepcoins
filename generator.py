@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import image_tools as imt
 from tqdm import tqdm
 import image_tools as imt
 

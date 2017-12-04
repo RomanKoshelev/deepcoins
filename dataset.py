@@ -33,3 +33,6 @@ class Dataset:
         a = self.data.shape[1]
         r = np.random.randint(a-1)+1
         return imt.uint8_to_float32(self.data[:,r])
+    
+    def get_data_size(self):
+        return self.data.shape[0]*self.data.shape[1]
