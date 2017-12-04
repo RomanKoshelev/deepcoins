@@ -43,7 +43,7 @@ def show_losses(losses, step, step_num, mean_win=10):
     plt.show()
 
     
-def show_losses_ex(step, tr_losses, va_losses, mean_win=30, log_scale=False):
+def show_losses_ex(tr_losses, va_losses, lr, mean_win=30, log_scale=False):
     def running_mean(x, N):
         cumsum = np.cumsum(np.insert(x, 0, 0)) 
         return (cumsum[N:] - cumsum[:-N]) / N 
@@ -53,7 +53,7 @@ def show_losses_ex(step, tr_losses, va_losses, mean_win=30, log_scale=False):
     tr_loss = tr_rm[-1] if len(tr_rm)>0 else tr_losses[-1]
     va_loss = va_rm[-1] if len(va_rm)>0 else 0
 
-    plt.title("step: %d, va_loss: %.4f, tr_loss: %.4f" % (step+1, va_loss, tr_loss))
+    plt.title("lr: %.1e, valid: %.1e, train: %.1e" % (lr, va_loss, tr_loss))
     plt.plot(tr_losses, 'c')
     va, = plt.plot(va_rm, 'r', label="valid")
     tr, = plt.plot(tr_rm, 'b', label="train")
