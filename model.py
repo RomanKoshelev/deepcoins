@@ -4,7 +4,7 @@ from visualisation import show_loss_dist
 
 
 def euclidean_dist(a, b):
-    return tf.reduce_sum((a-b)**2, axis=1)
+    return tf.sqrt(tf.reduce_sum((a-b)**2, axis=1))
 
 
 class Model():

@@ -1,11 +1,11 @@
 TODO: 
-- try cosine distance
 - try arc from:
   - http://users.eecs.northwestern.edu/~jwa368/pdfs/deep_ranking.pdf
   - https://arxiv.org/pdf/1503.03832.pdf
-  + tf.nn.elu
   
 DONE:
++ tf.nn.elu
++ try cosine distance
 + VGG16
 + add normalization
 + show test loss while training

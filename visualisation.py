@@ -49,8 +49,6 @@ def show_losses(losses, step, step_num, mean_win=10):
     clear_output(True)
     plt.show()
 
-def show_losses_acc(ep, lr, tr_losses, va_losses, mean_win=30, log_scale=False):
-    pass
     
 def show_losses_ex(ep, lr, tr_losses, va_losses, mean_win=30, log_scale=False):
     tr_rm = running_mean(tr_losses, mean_win)
@@ -93,6 +91,7 @@ def show_similarity(img1, img2, sim, cols=4):
     sheet = np.minimum(sheet, 1)
     _show_images(images=sheet, image_shape=[h, 2*w+w3], cols=cols, rows=num//cols)
     
+    
 def show_loss_dist(ep, lr, tr_losses, va_losses, neg_dist, pos_dist, mean_win=30, log_scale=False):
     plt.figure(figsize=(16,12))
     fontsize = 14
@@ -116,11 +115,13 @@ def show_loss_dist(ep, lr, tr_losses, va_losses, neg_dist, pos_dist, mean_win=30
     plt.subplot(222)
     neg_means = running_mean(neg_dist, mean_win)
     pos_means = running_mean(pos_dist, mean_win)
+    dif_means = [neg_means[i]-pos_means[i] for i in range(len(neg_means))]
     plt.yscale('linear')
     plt.title('Distances on train | Negative %.2f | Positive %.2f' % (neg_means[-1], pos_means[-1]), fontsize=fontsize)
     nd, = plt.plot(neg_means, 'r', label="Negative")
     pd, = plt.plot(pos_means, 'b', label="Positive")
-    plt.legend(handles=[nd, pd], loc=0)
+    dd, = plt.plot(dif_means, 'g', label="Difference")
+    plt.legend(handles=[nd, pd, dd], loc=0)
     plt.grid(True)
 
     # Show
