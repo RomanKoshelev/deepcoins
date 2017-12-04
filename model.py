@@ -42,18 +42,19 @@ class Model():
             return lr
         else:
             raise RuntimeError("wrong lr type")
-
-
-    def _make_loss(self, main, same, diff, margin):
-        pos_dist = euclidean_dist(main, same)
-        neg_dist = euclidean_dist(main, diff)
-        loss = tf.nn.relu(pos_dist - neg_dist + margin)
-        loss = tf.reduce_mean(loss)
-        return loss
     
     def _make_mean_distance(self, a, b):
         return tf.reduce_mean(euclidean_dist(a, b))
-            
+
+
+    def _make_loss(self, main, same, diff, margin):
+        pos = euclidean_dist(main, same)
+        neg = euclidean_dist(main, diff)
+        loss = tf.nn.relu(pos - neg + margin)
+        loss = tf.reduce_mean(loss)
+        return loss
+
+    
     def build(self, net):
         tf.reset_default_graph()
         self._graph = tf.Graph()
@@ -72,9 +73,9 @@ class Model():
             self.nn_diff      = net(self.img_diff_pl, self.out_dims, reuse=True,  training=self.training_pl)
             # operations
             self.update_ops   = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            self.loss_op      = self._make_loss(self.nn_main, self.nn_same, self.nn_diff, self.margin_pl)
             self.pos_dist_op  = self._make_mean_distance(self.nn_main, self.nn_same)
             self.neg_dist_op  = self._make_mean_distance(self.nn_main, self.nn_diff)
+            self.loss_op      = self._make_loss(self.nn_main, self.nn_same, self.nn_diff, self.margin_pl)
             with tf.control_dependencies(self.update_ops):
                 self.train_op = tf.train.AdamOptimizer(self.lr_pl).minimize(self.loss_op)
             self.init_op      = tf.global_variables_initializer()
@@ -105,7 +106,7 @@ class Model():
             if self.tr_step % log_every == log_every-1:
                 img_main, img_same, img_diff = va_dataset.get_next_batch(batch_size)
                 va_loss = self._session.run(
-                    [self.loss_op], 
+                    self.loss_op, 
                     feed_dict={
                         self.img_main_pl: img_main,
                         self.img_same_pl: img_same,
