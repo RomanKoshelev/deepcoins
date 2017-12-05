@@ -1,4 +1,5 @@
 TODO: 
+- plot acc
 - try arc from:
   - http://users.eecs.northwestern.edu/~jwa368/pdfs/deep_ranking.pdf
   - https://arxiv.org/pdf/1503.03832.pdf

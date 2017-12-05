@@ -1,6 +1,9 @@
 import tensorflow as tf
 import numpy as np
+import pickle
+import os
 from visualisation import show_loss_dist
+from utils import make_dir
 
 
 def euclidean_dist(a, b):
@@ -14,6 +17,7 @@ class Model():
         self._session      = None
         self._graph        = None
         self.scope         = 'embedding'
+        # state
         self.tr_step       = 0
         self.tr_losses     = []
         self.va_losses     = []
@@ -119,13 +123,26 @@ class Model():
                     self.tr_losses, self.va_losses, 
                     self.neg_distances, self.pos_distances, 
                     mean_win, log_scale)
-
+        
     def save(self, path):
+        make_dir(path)
+        # state
+        pickle.dump(
+            [self.tr_step, self.tr_losses, self.va_losses, self.neg_distances, self.pos_distances], 
+            open(os.path.join(path, "state.p"), "wb"))
+        # weights
         with self._graph.as_default(), tf.variable_scope(self.scope):
             saver = tf.train.Saver()
         saver.save(self._session, path)
         
     def restore(self, path):
+        # state
+        try:
+            [self.tr_step, self.tr_losses, self.va_losses, self.neg_distances, self.pos_distances] = pickle.load(
+                open(os.path.join(path, "state.p"), "rb"))
+        except: 
+            print("State not found at", path)
+        # weights
         with self._graph.as_default(), tf.variable_scope(self.scope):
             saver = tf.train.Saver()
         saver.restore(self._session, path)        
