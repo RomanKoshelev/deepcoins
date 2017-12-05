@@ -92,7 +92,7 @@ def show_similarity(img1, img2, sim, cols=4):
     _show_images(images=sheet, image_shape=[h, 2*w+w3], cols=cols, rows=num//cols)
     
     
-def show_loss_dist(ep, lr, tr_losses, va_losses, neg_dist, pos_dist, mean_win=30, log_scale=False):
+def show_train_stats(ep, lr, tr_losses, va_losses, tr_accs, va_accs, neg_dist, pos_dist, mean_win=30, log_scale=False):
     plt.figure(figsize=(16,12))
     fontsize = 14
 
@@ -111,8 +111,23 @@ def show_loss_dist(ep, lr, tr_losses, va_losses, neg_dist, pos_dist, mean_win=30
     plt.legend(handles=[va, tr])
     plt.grid(True)
 
-    # Distances
+    # Accuracy
     plt.subplot(222)
+    tr_means = running_mean(tr_accs, mean_win)
+    va_means = running_mean(va_accs, mean_win)
+    tr_acc = tr_means[-1]
+    va_acc = va_means[-1]
+    plt.yscale('linear')
+    plt.title('Accuracy | Valid %.2f | Train %.2f' % (va_acc, tr_acc), fontsize=fontsize)
+    tr, = plt.plot(tr_means, 'b', label="Train")
+    va, = plt.plot(va_means, 'r', label="Valid")
+    if log_scale:
+        plt.yscale("log")
+    plt.legend(handles=[tr, va], loc=0)
+    plt.grid(True)
+    
+    # Distances
+    plt.subplot(223)
     neg_means = running_mean(neg_dist, mean_win)
     pos_means = running_mean(pos_dist, mean_win)
     dif_means = [neg_means[i]-pos_means[i] for i in range(len(neg_means))]
@@ -126,4 +141,4 @@ def show_loss_dist(ep, lr, tr_losses, va_losses, neg_dist, pos_dist, mean_win=30
 
     # Show
     clear_output(True)    
-    plt.show()    
+    plt.show()

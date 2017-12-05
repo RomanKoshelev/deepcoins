@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import pickle
 import os
-from visualisation import show_loss_dist
+from visualisation import show_train_stats
 from utils import make_dir
 
 
@@ -11,18 +11,21 @@ def euclidean_dist(a, b):
 
 
 class Model():
-    def __init__(self, image_shape, out_dims):
-        self.image_shape   = image_shape
-        self.out_dims      = out_dims
-        self._session      = None
-        self._graph        = None
-        self.scope         = 'embedding'
+    def __init__(self, image_shape, out_dims, acc_batch_size=100):
+        self.image_shape    = image_shape
+        self.out_dims       = out_dims
+        self._session       = None
+        self._graph         = None
+        self.scope          = 'embedding'
+        self.acc_batch_size = acc_batch_size
         # state
-        self.tr_step       = 0
-        self.tr_losses     = []
-        self.va_losses     = []
-        self.neg_distances = []
-        self.pos_distances = []
+        self.tr_step        = 0
+        self.tr_losses      = []
+        self.va_losses      = []
+        self.tr_accs        = []
+        self.va_accs        = []        
+        self.neg_distances  = []
+        self.pos_distances  = []
 
 
     def _calc_lr(self, lr, losses, mean_win):
@@ -58,6 +61,25 @@ class Model():
         loss = tf.reduce_mean(loss)
         return loss
 
+    def _make_acc(self, emb_main, emb_same):
+        bs = self.acc_batch_size
+        e0 = emb_main
+        e1 = emb_same
+        e0 = tf.tile(e0, [bs,1])
+        e1 = tf.tile(e1, [1,bs])
+
+        e0 = tf.reshape(e0, [-1])
+        e1 = tf.reshape(e1, [-1])
+
+        d = tf.sqrt((e1 - e0)**2)
+        d = tf.reshape(d, [bs, bs, -1])
+        d = tf.reduce_sum(d, axis=2)
+        r = tf.argmin(d, 1)
+        l = np.linspace(0,bs-1,bs)
+        q = tf.cast(tf.equal(r,l), dtype=tf.float32)
+        acc = tf.reduce_mean(q)        
+        return acc
+
     
     def build(self, net):
         tf.reset_default_graph()
@@ -72,14 +94,15 @@ class Model():
             self.lr_pl        = tf.placeholder(dtype=tf.float32, name='lr')
             self.training_pl  = tf.placeholder(dtype=tf.bool,    name='training')
             # network
-            self.nn_main      = net(self.img_main_pl, self.out_dims, reuse=False, training=self.training_pl)
-            self.nn_same      = net(self.img_same_pl, self.out_dims, reuse=True,  training=self.training_pl)
-            self.nn_diff      = net(self.img_diff_pl, self.out_dims, reuse=True,  training=self.training_pl)
+            self.emb_main     = net(self.img_main_pl, self.out_dims, reuse=False, training=self.training_pl)
+            self.emb_same     = net(self.img_same_pl, self.out_dims, reuse=True,  training=self.training_pl)
+            self.emb_diff     = net(self.img_diff_pl, self.out_dims, reuse=True,  training=self.training_pl)
             # operations
             self.update_ops   = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            self.pos_dist_op  = self._make_mean_distance(self.nn_main, self.nn_same)
-            self.neg_dist_op  = self._make_mean_distance(self.nn_main, self.nn_diff)
-            self.loss_op      = self._make_loss(self.nn_main, self.nn_same, self.nn_diff, self.margin_pl)
+            self.pos_dist_op  = self._make_mean_distance(self.emb_main, self.emb_same)
+            self.neg_dist_op  = self._make_mean_distance(self.emb_main, self.emb_diff)
+            self.loss_op      = self._make_loss(self.emb_main, self.emb_same, self.emb_diff, self.margin_pl)
+            self.acc_op       = self._make_acc(self.emb_main, self.emb_same)
             with tf.control_dependencies(self.update_ops):
                 self.train_op = tf.train.AdamOptimizer(self.lr_pl).minimize(self.loss_op)
             self.init_op      = tf.global_variables_initializer()
@@ -109,6 +132,7 @@ class Model():
             # Eval
             if self.tr_step % log_every == log_every-1:
                 img_main, img_same, img_diff = va_dataset.get_next_batch(batch_size)
+                # loss
                 va_loss = self._session.run(
                     self.loss_op, 
                     feed_dict={
@@ -118,9 +142,16 @@ class Model():
                         self.margin_pl:   margin,
                         self.training_pl: False })
                 self.va_losses.extend([va_loss]*log_every)
-                show_loss_dist(
+                # acc
+                tr_acc = self.calc_acc(tr_dataset)
+                va_acc = self.calc_acc(va_dataset)
+                self.tr_accs.extend([tr_acc]*log_every)
+                self.va_accs.extend([va_acc]*log_every)
+                # show
+                show_train_stats(
                     ep, cur_lr, 
                     self.tr_losses, self.va_losses, 
+                    self.tr_accs, self.va_accs,
                     self.neg_distances, self.pos_distances, 
                     mean_win, log_scale)
         
@@ -128,7 +159,10 @@ class Model():
         make_dir(path)
         # state
         pickle.dump(
-            [self.tr_step, self.tr_losses, self.va_losses, self.neg_distances, self.pos_distances], 
+            [self.tr_step, 
+             self.tr_losses, self.va_losses, 
+             self.tr_accs, self.va_accs, 
+             self.neg_distances, self.pos_distances], 
             open(os.path.join(path, "state.p"), "wb"))
         # weights
         with self._graph.as_default(), tf.variable_scope(self.scope):
@@ -138,7 +172,10 @@ class Model():
     def restore(self, path):
         # state
         try:
-            [self.tr_step, self.tr_losses, self.va_losses, self.neg_distances, self.pos_distances] = pickle.load(
+             [self.tr_step, 
+             self.tr_losses, self.va_losses, 
+             self.tr_accs, self.va_accs, 
+             self.neg_distances, self.pos_distances] = pickle.load(
                 open(os.path.join(path, "state.p"), "rb"))
         except: 
             print("State not found at", path)
@@ -154,9 +191,18 @@ class Model():
         outputs = np.zeros(shape=[len(images), self.out_dims])
         for b,e in beg_end(len(images), batch_size):
             batch = images[b:e]
-            res = self._session.run(self.nn_main, feed_dict = {
+            emb = self._session.run(self.emb_main, feed_dict = {
                 self.img_main_pl: batch,
                 self.training_pl: False,
             })
-            outputs[b:e] = res
+            outputs[b:e] = emb
         return outputs
+    
+    def calc_acc(self, dataset):
+        img_main, img_same, _ = dataset.get_next_batch(self.acc_batch_size)
+        acc = self._session.run(self.acc_op, feed_dict = {
+            self.img_main_pl: img_main,
+            self.img_same_pl: img_same,
+            self.training_pl: False
+        })
+        return acc

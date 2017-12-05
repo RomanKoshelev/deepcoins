@@ -13,11 +13,11 @@ class Dataset:
     
     def get_next_batch(self, bs):
         n,a = self.data.shape[:2]
-        assert 2*bs<=n and bs<=a
+        assert 2*bs<=n, "Too large batch size %d"%bs
         idx_n   = np.random.choice(np.arange(n), bs*2, replace=False)
-        idx_a_1 = np.random.choice(np.arange(a), bs,   replace=False)
-        idx_a_2 = np.random.choice(np.arange(a), bs,   replace=False)
-        idx_a_3 = np.random.choice(np.arange(a), bs,   replace=False)
+        idx_a_1 = np.random.choice(np.arange(a), bs)
+        idx_a_2 = np.random.choice(np.arange(a), bs)
+        idx_a_3 = np.random.choice(np.arange(a), bs)
 
         to_float = imt.uint8_to_float32
         main  = to_float(self.data[idx_n[:bs],  idx_a_1])
