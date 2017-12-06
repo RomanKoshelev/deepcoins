@@ -19,9 +19,9 @@ class Dataset:
         i_m = np.random.choice(np.arange(n), bs, replace=bs>n)
         i_d = np.random.choice(np.arange(n), bs, replace=bs>n)
         
-        a_m = 0 #np.random.choice(np.arange(a), bs, replace=bs>a)
+        a_m = np.random.choice(np.arange(a), bs, replace=bs>a)
         a_s = np.random.choice(np.arange(a), bs, replace=bs>a)
-        a_d = 0 #np.random.choice(np.arange(a), bs, replace=bs>a)
+        a_d = np.random.choice(np.arange(a), bs, replace=bs>a)
 
         main  = to_float(self.data[i_m, a_m])
         same  = to_float(self.data[i_m, a_s])

@@ -32,6 +32,10 @@ def resize(images, shape):
     return res
 
 def plot(images, columns):
+    if images.shape[-1] == 1:
+        images = np.tile(images, [1,1,1,3])*255.
+        images = images.astype('uint8')
+    
     num  = len(images)
     rows = max(1,num//columns)
     W    = 18

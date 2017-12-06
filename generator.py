@@ -9,6 +9,7 @@ class Generator:
         self.augmented = None
     
     def generate(self, images_path, image_shape, augmentator, image_num, aug_num):
+        self.aug_name = augmentator.name
         h,w,c = image_shape
         ethalons  = imt.load(images_path, image_num)
         ethalons  = imt.resize(ethalons, [h,w,3])
@@ -24,7 +25,7 @@ class Generator:
     
     def save(self, dataset_dir):
         data = self.augmented
-        ds_name = '_'.join(['%d'%d for d in data.shape])+'_%s'%data.dtype
+        ds_name = '_'.join(['%d'%d for d in data.shape])+'_%s'%data.dtype+'_'+self.aug_name
         ds_path = os.path.join(dataset_dir, ds_name+'.npy')
         np.save(ds_path, data)
         return ds_path

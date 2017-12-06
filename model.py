@@ -112,49 +112,58 @@ class Model():
         self._session.run(self.init_op)
         
     def train(self, tr_dataset, va_dataset, step_num, batch_size, margin, lr, log_every=10, mean_win=100, log_scale=False):
-        data_size = tr_dataset.get_data_size()
-        for self.tr_step in range(self.tr_step, step_num):
-            cur_lr = self._calc_lr(lr, self.tr_losses, mean_win)
-            ep = self.tr_step*batch_size/data_size
-            # Train
-            img_main, img_same, img_diff = tr_dataset.get_next_batch(batch_size)
-            _, tr_loss, pos_dist, neg_dist = self._session.run(
-                [self.train_op, self.loss_op, self.pos_dist_op, self.neg_dist_op], 
-                feed_dict={
-                    self.img_main_pl: img_main,
-                    self.img_same_pl: img_same,
-                    self.img_diff_pl: img_diff,
-                    self.margin_pl:   margin,
-                    self.lr_pl:       cur_lr,
-                    self.training_pl: True })
-            self.tr_losses.append(tr_loss)
-            self.pos_distances.append(pos_dist)
-            self.neg_distances.append(neg_dist)
-            # Eval
-            if self.tr_step % log_every == log_every-1:
-                img_main, img_same, img_diff = va_dataset.get_next_batch(batch_size)
-                # loss
-                va_loss = self._session.run(
-                    self.loss_op, 
+        try:
+            data_size = tr_dataset.get_data_size()
+            for self.tr_step in range(self.tr_step, step_num):
+                cur_lr = self._calc_lr(lr, self.tr_losses, mean_win)
+                ep = self.tr_step*batch_size/data_size
+                # Train
+                img_main, img_same, img_diff = tr_dataset.get_next_batch(batch_size)
+                _, tr_loss, pos_dist, neg_dist = self._session.run(
+                    [self.train_op, self.loss_op, self.pos_dist_op, self.neg_dist_op], 
                     feed_dict={
                         self.img_main_pl: img_main,
                         self.img_same_pl: img_same,
                         self.img_diff_pl: img_diff,
                         self.margin_pl:   margin,
-                        self.training_pl: False })
-                self.va_losses.extend([va_loss]*log_every)
-                # acc
-                tr_acc = self.calc_acc(tr_dataset)
-                va_acc = self.calc_acc(va_dataset)
-                self.tr_accs.extend([tr_acc]*log_every)
-                self.va_accs.extend([va_acc]*log_every)
-                # show
-                show_train_stats(
-                    ep, cur_lr, 
-                    self.tr_losses, self.va_losses, 
-                    self.tr_accs, self.va_accs,
-                    self.neg_distances, self.pos_distances, 
-                    mean_win, log_scale)
+                        self.lr_pl:       cur_lr,
+                        self.training_pl: True })
+                self.tr_losses.append(tr_loss)
+                self.pos_distances.append(pos_dist)
+                self.neg_distances.append(neg_dist)
+                # Eval
+                if self.tr_step % log_every == log_every-1:
+                    img_main, img_same, img_diff = va_dataset.get_next_batch(batch_size)
+                    # loss
+                    va_loss = self._session.run(
+                        self.loss_op, 
+                        feed_dict={
+                            self.img_main_pl: img_main,
+                            self.img_same_pl: img_same,
+                            self.img_diff_pl: img_diff,
+                            self.margin_pl:   margin,
+                            self.training_pl: False })
+                    self.va_losses.extend([va_loss]*log_every)
+                    # acc
+                    tr_acc = self.calc_acc(tr_dataset)
+                    va_acc = self.calc_acc(va_dataset)
+                    self.tr_accs.extend([tr_acc]*log_every)
+                    self.va_accs.extend([va_acc]*log_every)
+                    # show
+                    show_train_stats(
+                        ep, cur_lr, 
+                        self.tr_losses, self.va_losses, 
+                        self.tr_accs, self.va_accs,
+                        self.neg_distances, self.pos_distances, 
+                        mean_win, log_scale)
+        except KeyboardInterrupt:
+            show_train_stats(
+                ep, cur_lr, 
+                self.tr_losses, self.va_losses, 
+                self.tr_accs, self.va_accs,
+                self.neg_distances, self.pos_distances, 
+                mean_win, log_scale)
+
         
     def save(self, path):
         make_dir(path)
