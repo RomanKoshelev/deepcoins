@@ -60,6 +60,7 @@ class Model():
         loss = tf.nn.relu(pos - neg + margin)
         loss = tf.reduce_mean(loss)
         return loss
+    
 
     def _make_acc(self, emb_main, emb_same):
         bs = self.acc_batch_size
