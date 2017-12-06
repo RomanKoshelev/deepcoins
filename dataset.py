@@ -13,17 +13,20 @@ class Dataset:
     
     def get_next_batch(self, bs):
         n,a = self.data.shape[:2]
-        assert 2*bs<=n, "Too large batch size %d"%bs
-        idx_n   = np.random.choice(np.arange(n), bs*2, replace=False)
-        idx_a_1 = np.random.choice(np.arange(a), bs)
-        idx_a_2 = np.random.choice(np.arange(a), bs)
-        idx_a_3 = np.random.choice(np.arange(a), bs)
-
-        to_float = imt.uint8_to_float32
-        main  = to_float(self.data[idx_n[:bs],  idx_a_1])
-        same  = to_float(self.data[idx_n[:bs],  idx_a_2])
-        diff  = to_float(self.data[idx_n[-bs:], idx_a_3])
         
+        to_float = imt.uint8_to_float32
+        
+        i_m = np.random.choice(np.arange(n), bs, replace=bs>n)
+        i_d = np.random.choice(np.arange(n), bs, replace=bs>n)
+        
+        a_m = np.random.choice(np.arange(a), bs, replace=bs>a)
+        a_s = np.random.choice(np.arange(a), bs, replace=bs>a)
+        a_d = np.random.choice(np.arange(a), bs, replace=bs>a)
+
+        main  = to_float(self.data[i_m, a_m])
+        same  = to_float(self.data[i_m, a_s])
+        diff  = to_float(self.data[i_d, a_d])
+            
         return main, same, diff
 
     def get_ethalons(self):
