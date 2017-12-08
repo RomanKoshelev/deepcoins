@@ -102,7 +102,7 @@ def show_train_stats(ep, lr, tr_losses, va_losses, tr_accs, va_accs, neg_dist, p
     va_means = running_mean(va_losses, mean_win)
     tr_loss = tr_means[-1]
     va_loss = va_means[-1]
-    plt.title("Epoch %.1f | LR %.1e | Valid %.1e | Train %.1e" % (ep, lr, va_loss, tr_loss), fontsize=fontsize)
+    plt.title("Epoch %.2f | LR %.1e | Valid %.2e | Train %.2e" % (ep, lr, va_loss, tr_loss), fontsize=fontsize)
     plt.plot(tr_losses, 'c')
     va, = plt.plot(va_means, 'r', label="Valid")
     tr, = plt.plot(tr_means, 'b', label="Train")
@@ -118,11 +118,9 @@ def show_train_stats(ep, lr, tr_losses, va_losses, tr_accs, va_accs, neg_dist, p
     tr_acc = tr_means[-1]
     va_acc = va_means[-1]
     plt.yscale('linear')
-    plt.title('Accuracy | Valid %.2f | Train %.2f' % (va_acc, tr_acc), fontsize=fontsize)
+    plt.title('Accuracy | Valid %.3f | Train %.3f' % (va_acc, tr_acc), fontsize=fontsize)
     tr, = plt.plot(tr_means, 'b', label="Train")
     va, = plt.plot(va_means, 'r', label="Valid")
-    if log_scale:
-        plt.yscale("log")
     plt.legend(handles=[tr, va], loc=0)
     plt.grid(True)
     
@@ -131,8 +129,11 @@ def show_train_stats(ep, lr, tr_losses, va_losses, tr_accs, va_accs, neg_dist, p
     neg_means = running_mean(neg_dist, mean_win)
     pos_means = running_mean(pos_dist, mean_win)
     dif_means = [neg_means[i]-pos_means[i] for i in range(len(neg_means))]
+    neg = neg_means[-1]
+    pos = pos_means[-1]
+    dif = dif_means[-1]
     plt.yscale('linear')
-    plt.title('Distances on train | Negative %.2f | Positive %.2f' % (neg_means[-1], pos_means[-1]), fontsize=fontsize)
+    plt.title('Distances on Train | Neg %.2f | Pos %.2f | Dif %.2f' % (neg, pos, dif), fontsize=fontsize)
     nd, = plt.plot(neg_means, 'r', label="Negative")
     pd, = plt.plot(pos_means, 'b', label="Positive")
     dd, = plt.plot(dif_means, 'g', label="Difference")
