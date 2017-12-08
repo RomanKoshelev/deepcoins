@@ -44,7 +44,7 @@ def simple_conv(images, out_dim, reuse, training):
 
         l = dense(l,    1024)
         l = dense(l,    1024)
-        l = dense(l, out_dim)
+        l = dense(l, out_dim, activation=None)
         
         l = normalize(l)
         
