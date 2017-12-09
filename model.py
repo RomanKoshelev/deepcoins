@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import pickle
 import os
-from visualisation import show_train_stats
+from visualization import show_train_stats
 from utils import make_dir
 
 
@@ -110,6 +110,7 @@ class Model():
             
         self._session = tf.Session(graph=self._graph)
         self._session.run(self.init_op)
+        
         
     def train(self, tr_dataset, va_dataset, step_num, batch_size, margin, lr, log_every=10, mean_win=100, log_scale=False):
         try:

@@ -3,7 +3,6 @@ import itertools
 import numpy as np
 from timeit import default_timer as timer
 from dbase import DataBase
-from visualisation import show_similarity
 
 
 def build_dbase(model, ethalons, augmented):
