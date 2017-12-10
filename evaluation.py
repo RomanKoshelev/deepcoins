@@ -77,21 +77,35 @@ def _show_similarity(img1, img2, sim, cols):
     _show_images(images=sheet, image_shape=[h, 2*w+w3], cols=cols, rows=num//cols)
 
     
-def plot_search_results(dbase, request, num, cols=4, k=0):
+def plot_search_results(dbase, request, num, cols=4, k=0, sort=None, plot_limit=None):
     per = np.random.choice(range(len(request)), num, replace=False)
+    pn  = plot_limit or len(request)
     request   = request[per]
     ethalons  = dbase.images
     ind, dist = dbase.query(request, k+1)
     response  = ethalons[ind[:,k]]
-    d = dist[:,k]
+    d    = dist[:,k]
     dmin = np.min(d)
     dmax = np.max(d)
     dave = np.mean(d)
-    sim = 1-(d-dmin)/dmax
     print("Database   : %s" % list(dbase.embeds.shape))
     print("Request    : %s" % list(request.shape))    
     print("")
     print("Min distance: %.2f" % dmin)
     print("Max distance: %.2f" % dmax)
     print("Ave distance: %.2f" % dave)
+    
+    e   = 1e-8
+    idx = range(len(d))
+    sim = 1-(d-dmin+e)/(dmax-dmin+e*10)
+    sim = np.minimum(sim, 1.)
+    sim = np.maximum(sim, 0.)
+    if sort=='asc':
+        idx = sorted(idx, key=lambda k: d[k])
+    elif sort=='desc':
+        idx = sorted(idx, key=lambda k: 1-d[k])
+    request  = request [idx][:pn]
+    response = response[idx][:pn]
+    sim      = sim     [idx][:pn]
+    
     _show_similarity(request, response, sim, cols)
