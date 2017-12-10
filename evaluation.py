@@ -77,12 +77,21 @@ def _show_similarity(img1, img2, sim, cols):
     _show_images(images=sheet, image_shape=[h, 2*w+w3], cols=cols, rows=num//cols)
 
     
-def plot_search_results(dbase, request, num, cols=4):
+def plot_search_results(dbase, request, num, cols=4, k=0):
     per = np.random.choice(range(len(request)), num, replace=False)
-    request  = request[per]
-    ethalons = dbase.images
-    ind, dist  = dbase.query(request, 1)
-    # print("Average distance: %.2f" % np.mean(dist[:,0]))
-    im2 = ethalons[ind[:,0]]
-    sim = 1-np.minimum(1,dist[:,0])
-    _show_similarity(request, im2, sim, cols)
+    request   = request[per]
+    ethalons  = dbase.images
+    ind, dist = dbase.query(request, k+1)
+    response  = ethalons[ind[:,k]]
+    d = dist[:,k]
+    dmin = np.min(d)
+    dmax = np.max(d)
+    dave = np.mean(d)
+    sim = 1-(d-dmin)/dmax
+    print("Database   : %s" % list(dbase.embeds.shape))
+    print("Request    : %s" % list(request.shape))    
+    print("")
+    print("Min distance: %.2f" % dmin)
+    print("Max distance: %.2f" % dmax)
+    print("Ave distance: %.2f" % dave)
+    _show_similarity(request, response, sim, cols)
