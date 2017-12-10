@@ -2,16 +2,6 @@ import matplotlib.pyplot as plt
 import itertools
 import numpy as np
 from timeit import default_timer as timer
-from dbase import DataBase
-
-
-def build_dbase(model, ethalons, augmented):
-    dbase     = DataBase()
-    dbase.build(model, ethalons)
-    print("Ethalons :", list(ethalons.shape),  ethalons.dtype)
-    print("Augmented:", list(augmented.shape), augmented.dtype)
-    print('-'*50)
-    return dbase
 
 
 def print_accuracy(dbase, request, k):
@@ -32,7 +22,6 @@ def print_accuracy(dbase, request, k):
     t = timer() - start
     n = request.shape[0]
 
-
     print("Database   : %s" % list(dbase.embeds.shape))
     print("Request    : %s" % list(request.shape))
     print("Performance: %.0f img/sec" % (n/t))
@@ -40,6 +29,7 @@ def print_accuracy(dbase, request, k):
     for k in range(1, ind.shape[1]+1):
         print("Accuracy@%d: %.1f%%" % (k, accuracy(ind, k)))
     print('-'*50)
+    
 
 def _show_images(images, image_shape, rows, cols):
     h = image_shape[0]
@@ -64,6 +54,7 @@ def _show_images(images, image_shape, rows, cols):
     plt.imshow(sheet, cmap='gray')
     plt.show()
     
+    
 def _show_similarity(img1, img2, sim, cols):
     num = img1.shape[0]
     h   = img1.shape[1]
@@ -85,6 +76,7 @@ def _show_similarity(img1, img2, sim, cols):
     sheet = np.minimum(sheet, 1)
     _show_images(images=sheet, image_shape=[h, 2*w+w3], cols=cols, rows=num//cols)
 
+    
 def plot_search_results(dbase, request, num, cols=4):
     per = np.random.choice(range(len(request)), num, replace=False)
     request  = request[per]
@@ -92,5 +84,5 @@ def plot_search_results(dbase, request, num, cols=4):
     ind, dist  = dbase.query(request, 1)
     # print("Average distance: %.2f" % np.mean(dist[:,0]))
     im2 = ethalons[ind[:,0]]
-    sim = 1-dist[:,0]
+    sim = 1-np.minimum(1,dist[:,0])
     _show_similarity(request, im2, sim, cols)

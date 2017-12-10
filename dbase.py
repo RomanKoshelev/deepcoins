@@ -12,3 +12,12 @@ class DataBase:
         embeds    = self.model.forward(images)
         dist, ind = self._tree.query(embeds, k)
         return ind, dist
+    
+
+def build_dbase(model, ethalons, augmented):
+    dbase     = DataBase()
+    dbase.build(model, ethalons)
+    print("Ethalons :", list(ethalons.shape),     ethalons.dtype)
+    print("Augmented:", list(augmented.shape),    augmented.dtype)
+    print("Database :", list(dbase.embeds.shape), dbase.embeds.dtype)
+    return dbase

@@ -79,7 +79,7 @@ def show_train_stats(ep, lr, tr_losses, va_losses, tr_accs, va_accs, neg_dist, p
     tr_acc = tr_means[-1]
     va_acc = va_means[-1]
     plt.yscale('linear')
-    plt.title('Accuracy | Valid %.3f | Train %.3f' % (va_acc, tr_acc), fontsize=fontsize)
+    plt.title('Accuracy | Valid %.2f%% | Train %.2f%%' % (va_acc*100, tr_acc*100), fontsize=fontsize)
     tr, = plt.plot(tr_means, 'b', label="Train")
     va, = plt.plot(va_means, 'r', label="Valid")
     plt.legend(handles=[tr, va], loc=0)

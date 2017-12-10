@@ -39,3 +39,13 @@ class Dataset:
     
     def get_data_size(self):
         return self.data.shape[0]*self.data.shape[1]
+
+    
+def load_datasets(*paths):
+    datasets = []
+    for path in paths:
+        ds   = Dataset(path)
+        ds.load()
+        print("%s:\n" % path, list(ds.data.shape), ds.data.dtype)
+        datasets.append(ds)        
+    return datasets
