@@ -115,7 +115,7 @@ class Model():
     def train(self, tr_dataset, va_dataset, step_num, batch_size, margin, lr, log_every=10, mean_win=100, log_scale=False):
         try:
             data_size = tr_dataset.get_data_size()
-            for self.tr_step in range(self.tr_step, step_num):
+            for self.tr_step in range(self.tr_step, step_num-1):
                 cur_lr = self._calc_lr(lr, self.tr_losses, mean_win)
                 ep = self.tr_step*batch_size/data_size
                 # Train
